@@ -2,40 +2,38 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   const sliders = document.querySelectorAll('.slider');
+  const valueInputs = document.querySelectorAll('.val-num');
   const webPolygon = document.getElementById('web-polygon');
   const nodesGroup = document.getElementById('nodes-group');
   const btnExportJpg = document.getElementById('btn-export-jpg');
-
-  // 8 Parameter colors matching CSS
+  // Radar attribute logic and export helpers
   const paramColors = [
-    '#FF0055', // 1. Recursos Externos
-    '#FF9900', // 2. Narração
-    '#FFEE00', // 3. Preparação
-    '#00FF66', // 4. Gestão de Ritmo
-    '#00E5FF', // 5. Criação Personagem
-    '#3377FF', // 6. Construção de Mundo
-    '#B033FF', // 7. Atuação
-    '#FF00CC'  // 8. Improvisação
+    '#FF0055', // Gerência de Ritmo
+    '#FF9900', // Improvisação
+    '#FFEE00', // Narração
+    '#00FF66', // Descrição
+    '#00E5FF', // Atuação
+    '#3377FF', // Recursos Externos
+    '#B033FF', // Dedicação e Preparação
+    '#FF00CC'  // Construção de Mundo e NPCs
   ];
-
   // 8 Direction vectors (SVG coordinates: Y points down)
   const directions = [
-    [0, -1],                        // 0. Top (Recursos Externos)
-    [Math.SQRT1_2, -Math.SQRT1_2],  // 1. Top-Right (Narração)
-    [1, 0],                         // 2. Right (Preparação)
-    [Math.SQRT1_2, Math.SQRT1_2],   // 3. Bottom-Right (Ritmo)
-    [0, 1],                         // 4. Bottom (Personagem)
-    [-Math.SQRT1_2, Math.SQRT1_2],  // 5. Bottom-Left (Mundo)
-    [-1, 0],                        // 6. Left (Atuação)
-    [-Math.SQRT1_2, -Math.SQRT1_2]  // 7. Top-Left (Improvisação)
+    [0, -1],
+    [Math.SQRT1_2, -Math.SQRT1_2],
+    [1, 0],
+    [Math.SQRT1_2, Math.SQRT1_2],
+    [0, 1],
+    [-Math.SQRT1_2, Math.SQRT1_2],
+    [-1, 0],
+    [-Math.SQRT1_2, -Math.SQRT1_2]
   ];
-
   // Calculate JoJo Stand Rank (E to A)
   function getRank(val) {
-    if (val <= 0.7) return { rank: 'E', class: 'rank-e' };
-    if (val <= 1.5) return { rank: 'D', class: 'rank-d' };
-    if (val <= 2.5) return { rank: 'C', class: 'rank-c' };
-    if (val <= 3.5) return { rank: 'B', class: 'rank-b' };
+    if (val <= 0.875) return { rank: 'E', class: 'rank-e' };
+    if (val <= 1.875) return { rank: 'D', class: 'rank-d' };
+    if (val <= 3.125) return { rank: 'C', class: 'rank-c' };
+    if (val <= 4.375) return { rank: 'B', class: 'rank-b' };
     return { rank: 'A', class: 'rank-a' };
   }
 
@@ -46,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     sliders.forEach((slider, idx) => {
       const val = parseFloat(slider.value);
-      const normalized = val / 4; // Scale 0 to 1
+      const normalized = val / 5; // Scale 0 to 1
       const [dx, dy] = directions[idx];
       const cx = dx * normalized;
       const cy = dy * normalized;
@@ -67,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Update value text display
       const valDisplay = document.getElementById(`val-${idx}`);
-      if (valDisplay) valDisplay.textContent = val.toFixed(1);
+      if (valDisplay) valDisplay.value = val.toFixed(1);
 
       // Update JoJo Rank badge
       const rankBadge = document.getElementById(`rank-${idx}`);
@@ -87,6 +85,19 @@ document.addEventListener('DOMContentLoaded', () => {
     slider.addEventListener('input', updateOctagon);
   });
 
+  valueInputs.forEach((input, idx) => {
+    input.addEventListener('input', () => {
+      if (input.value === '' || !Number.isFinite(input.valueAsNumber)) return;
+      const slider = sliders[idx];
+      slider.value = Math.min(Number(slider.max), Math.max(Number(slider.min), input.valueAsNumber));
+      updateOctagon();
+    });
+
+    input.addEventListener('blur', () => {
+      input.value = parseFloat(sliders[idx].value).toFixed(1);
+    });
+  });
+
   // Initial render
   updateOctagon();
 
@@ -99,8 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (masterNameInput === null) return;
       const masterName = masterNameInput.trim() || 'MESTRE DE RPG';
       const cleanFileName = `Radar_Mestre_${masterName.replace(/[^a-zA-Z0-9_-]/g, '_')}.jpg`;
-
-      // 2. Dimensões
+  // Radar attribute logic and export helpers
       const CANVAS_W = 1200;
       const CANVAS_H = 1100;
       const SVG_DRAW_W = 920;
@@ -109,23 +119,16 @@ document.addEventListener('DOMContentLoaded', () => {
       // 3. Ler valores atuais dos sliders
       const sliderVals = Array.from(sliders).map(s => parseFloat(s.value));
       const webPoints = sliderVals.map((val, idx) => {
-        const norm = val / 4;
+        const norm = val / 5;
         const [dx, dy] = directions[idx];
         return `${(dx * norm).toFixed(4)},${(dy * norm).toFixed(4)}`;
       }).join(' ');
-
-      // Labels com &amp; para XML válido
+  // Radar attribute logic and export helpers
       const paramLabels = [
-        '1. RECURSOS EXTERNOS',
-        '2. NARRACAO &amp; DESCRICAO',
-        '3. PREPARACAO &amp; DEDICACAO',
-        '4. GESTAO DE RITMO',
-        '5. CRIACAO DE PERSONAGEM',
-        '6. CONSTRUCAO DE MUNDO',
-        '7. ATUACAO',
-        '8. IMPROVISACAO'
+        '1. GERENCIA DE RITMO', '2. IMPROVISACAO', '3. NARRACAO', '4. DESCRICAO',
+        '5. ATUACAO', '6. RECURSOS EXTERNOS', '7. DEDICACAO E PREPARACAO',
+        '8. CONSTRUCAO DE MUNDO E NPCS'
       ];
-
       const labelPositions = [
         { x: 0,     y: -1.14, anchor: 'middle' },
         { x: 0.82,  y: -0.78, anchor: 'start' },
@@ -136,10 +139,9 @@ document.addEventListener('DOMContentLoaded', () => {
         { x: -1.08, y: 0.04,  anchor: 'end' },
         { x: -0.82, y: -0.78, anchor: 'end' }
       ];
-
-      // Gerar circles dos nós
+  // Radar attribute logic and export helpers
       const nodeCirclesSvg = sliderVals.map((val, idx) => {
-        const norm = val / 4;
+        const norm = val / 5;
         const [dx, dy] = directions[idx];
         return `<circle cx="${(dx * norm).toFixed(4)}" cy="${(dy * norm).toFixed(4)}" r="0.04" fill="${paramColors[idx]}" stroke="#FFF" stroke-width="0.01"/>`;
       }).join('');
@@ -149,8 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const pos = labelPositions[idx];
         return `<text x="${pos.x}" y="${pos.y}" text-anchor="${pos.anchor}" dominant-baseline="middle" fill="${paramColors[idx]}" font-family="Georgia,serif" font-size="0.09" font-weight="bold">${label}</text>`;
       }).join('');
-
-      // SVG completo auto-suficiente (sem CSS externo, sem caracteres Unicode problemáticos)
+  // Radar attribute logic and export helpers
       const svgMarkup = [
         '<svg xmlns="http://www.w3.org/2000/svg" width="960" height="880" viewBox="-2.2 -1.6 4.4 3.2">',
         '<rect x="-2.2" y="-1.6" width="4.4" height="3.2" fill="#0a0814"/>',
@@ -172,14 +173,13 @@ document.addEventListener('DOMContentLoaded', () => {
         `<polygon points="${webPoints}" fill="rgba(0,229,255,0.22)" stroke="#00E5FF" stroke-width="0.022" stroke-linejoin="round"/>`,
         // Centro
         '<circle cx="0" cy="0" r="0.05" fill="#FFF" stroke="#d4af37" stroke-width="0.016"/>',
-        // Nós
+  // Radar attribute logic and export helpers
         nodeCirclesSvg,
         // Labels
         svgLabelsSvg,
         '</svg>'
       ].join('');
-
-      // 4. Criar canvas e desenhar cabeçalho com Canvas 2D API
+  // Radar attribute logic and export helpers
       const canvas = document.createElement('canvas');
       canvas.width = CANVAS_W;
       canvas.height = CANVAS_H;
@@ -207,8 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.fillStyle = '#FFD700';
       ctx.font = 'bold 32px Georgia, serif';
       ctx.fillText('MESTRE: ' + masterName.toUpperCase(), CANVAS_W / 2, 100);
-
-      // Subtítulo
+  // Radar attribute logic and export helpers
       ctx.fillStyle = 'rgba(240,240,248,0.7)';
       ctx.font = 'bold 15px Georgia, serif';
       ctx.fillText('- RADAR DE ATRIBUTOS -', CANVAS_W / 2, 130);
@@ -222,8 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const svgX = (CANVAS_W - SVG_DRAW_W) / 2;
         const svgY = 150;
         ctx.drawImage(img, svgX, svgY, SVG_DRAW_W, SVG_DRAW_H);
-
-        // Rodapé
+  // Radar attribute logic and export helpers
         ctx.textAlign = 'center';
         ctx.fillStyle = 'rgba(240,240,248,0.85)';
         ctx.font = 'bold 15px Georgia, serif';
@@ -247,64 +245,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ---------- Cursor Particle Effect ----------
-  const particleCanvas = document.getElementById('particle-canvas');
-  const pCtx = particleCanvas.getContext('2d');
-  let particles = [];
-  const maxParticles = 90;
-
-  function resizeCanvas() {
-    particleCanvas.width = window.innerWidth;
-    particleCanvas.height = window.innerHeight;
-  }
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-
-  function createParticle(x, y) {
-    const randomColor = paramColors[Math.floor(Math.random() * paramColors.length)];
-    particles.push({
-      x, y,
-      vx: (Math.random() - 0.5) * 0.8,
-      vy: (Math.random() - 0.5) * 0.8,
-      size: Math.random() * 2.5 + 1,
-      color: randomColor,
-      alpha: 1
-    });
-    if (particles.length > maxParticles) particles.shift();
-  }
-
-  document.addEventListener('mousemove', (e) => {
-    for (let i = 0; i < 2; i++) {
-      createParticle(e.clientX, e.clientY);
-    }
-  });
-
-  function animateParticles() {
-    pCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
-
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.alpha -= 0.018;
-
-      if (p.alpha <= 0) {
-        particles.splice(i, 1);
-        continue;
-      }
-
-      pCtx.globalAlpha = p.alpha;
-      pCtx.fillStyle = p.color;
-      pCtx.shadowBlur = 8;
-      pCtx.shadowColor = p.color;
-      pCtx.beginPath();
-      pCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      pCtx.fill();
-    }
-    pCtx.globalAlpha = 1;
-    pCtx.shadowBlur = 0;
-    requestAnimationFrame(animateParticles);
-  }
-
-  animateParticles();
 });
